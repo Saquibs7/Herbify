@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Herbify",
+    "slug": "herbify",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "splash": {
+      "image": "./src/assets/herbify-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a3df1404-bfe3-4d38-88e4-f7235ac8e9a1"
+      }
+    }
+  }
+}
