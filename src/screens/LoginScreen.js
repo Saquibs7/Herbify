@@ -67,6 +67,8 @@ export default function LoginScreen({ navigation }) {
     navigation.replace('LabDashboard');
   } else if (userType === 'Consumer') {
     navigation.replace('ConsumerDashboard');
+  } else if (userType === 'Processor') {
+    navigation.replace('ProcessorDashboard');
   } 
   else {
     navigation.replace('Home'); // Customize this as per other roles/screens
