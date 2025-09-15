@@ -1,0 +1,181 @@
+Organizations:
+    - &OrdererOrg
+        Name: OrdererMSP
+        ID: OrdererMSP
+        MSPDir: crypto-config/ordererOrganizations/herbify.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrdererMSP.admin')"
+        OrdererEndpoints:
+            - orderer.herbify.com:7050
+
+    - &FarmerOrg
+        Name: FarmerOrgMSP
+        ID: FarmerOrgMSP
+        MSPDir: crypto-config/peerOrganizations/farmer.herbify.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('FarmerOrgMSP.admin', 'FarmerOrgMSP.peer', 'FarmerOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('FarmerOrgMSP.admin', 'FarmerOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('FarmerOrgMSP.admin')"
+        AnchorPeers:
+            - Host: peer0.farmer.herbify.com
+              Port: 7051
+
+    - &ProcessorOrg
+        Name: ProcessorOrgMSP
+        ID: ProcessorOrgMSP
+        MSPDir: crypto-config/peerOrganizations/processor.herbify.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('ProcessorOrgMSP.admin', 'ProcessorOrgMSP.peer', 'ProcessorOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('ProcessorOrgMSP.admin', 'ProcessorOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('ProcessorOrgMSP.admin')"
+        AnchorPeers:
+            - Host: peer0.processor.herbify.com
+              Port: 9051
+
+    - &LabOrg
+        Name: LabOrgMSP
+        ID: LabOrgMSP
+        MSPDir: crypto-config/peerOrganizations/lab.herbify.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('LabOrgMSP.admin', 'LabOrgMSP.peer', 'LabOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('LabOrgMSP.admin', 'LabOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('LabOrgMSP.admin')"
+        AnchorPeers:
+            - Host: peer0.lab.herbify.com
+              Port: 11051
+
+Capabilities:
+    Channel: &ChannelCapabilities
+        V2_0: true
+    Orderer: &OrdererCapabilities
+        V2_0: true
+    Application: &ApplicationCapabilities
+        V2_0: true
+
+Application: &ApplicationDefaults
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "ANY Admins"
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+    OrdererType: etcdraft
+    EtcdRaft:
+        Consenters:
+        - Host: orderer.herbify.com
+          Port: 7050
+          ClientTLSCert: crypto-config/ordererOrganizations/herbify.com/orderers/orderer.herbify.com/tls/server.crt
+          ServerTLSCert: crypto-config/ordererOrganizations/herbify.com/orderers/orderer.herbify.com/tls/server.crt
+    Addresses:
+        - orderer.herbify.com:7050
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "ANY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+    Capabilities:
+        <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+    Capabilities:
+        <<: *ChannelCapabilities
+
+Profiles:
+    HerbifyGenesisProfile:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *FarmerOrg
+                - *ProcessorOrg
+                - *LabOrg
+            Capabilities:
+                <<: *ApplicationCapabilities
+        Consortiums:
+            HerbifyConsortium:
+                Organizations:
+                    - *FarmerOrg
+                    - *ProcessorOrg
+                    - *LabOrg
+    HerbifyChannelProfile:
+        Consortium: HerbifyConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *FarmerOrg
+                - *ProcessorOrg
+                - *LabOrg
+            Capabilities:
+                <<: *ApplicationCapabilities
