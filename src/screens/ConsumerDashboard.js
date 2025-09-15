@@ -1,9 +1,10 @@
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
   TextInput,
   StyleSheet
 } from 'react-native';
@@ -20,7 +21,7 @@ const colors = {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  
+
   // Header
   header: {
     flexDirection: 'row',
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   // Search Bar
   searchContainer: {
     paddingHorizontal: 16,
@@ -74,13 +75,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 16,
   },
-  
+
   // Content
   content: {
     flex: 1,
     paddingBottom: 90, // Space for tab bar
   },
-  
+
   // Section Headers
   sectionHeader: {
     paddingHorizontal: 16,
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  
+
   // Scan Section
   scanCard: {
     marginHorizontal: 16,
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.background,
   },
-  
+
   // Recent Scans
   scanItem: {
     flexDirection: 'row',
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.textSecondary,
   },
-  
+
   // Tab Bar
   tabBar: {
     position: 'absolute',
@@ -218,6 +219,7 @@ const ConsumerDashboard = () => {
     { id: '2', title: 'Fair Trade Coffee Beans', subtitle: 'Verified: 1 week ago', icon: '☕' },
     { id: '3', title: 'Sustainable Salmon', subtitle: 'Verified: 3 weeks ago', icon: '🐟' },
   ];
+  const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
@@ -259,9 +261,13 @@ const ConsumerDashboard = () => {
             <Text style={styles.scanDescription}>
               Use your camera to scan QR codes or NFC tags on products to verify their authenticity and journey.
             </Text>
-            <TouchableOpacity style={styles.scanButton}>
+            <TouchableOpacity
+              style={styles.scanButton}
+              onPress={() => navigation.navigate('ScanScreen')}
+            >
               <Text style={styles.scanButtonText}>Scan Now</Text>
             </TouchableOpacity>
+
           </View>
         </View>
 

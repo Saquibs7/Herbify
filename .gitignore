@@ -1,7 +1,42 @@
-node_modules/
-.expo/
+# Dependency directories
+/node_modules
+/.expo
+
+# VS Code/IDE settings and logs
+.vscode/
+.idea/
 *.log
-*.tmp
-*.swp
-.expo-shared/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Expo/EAS build and cache
+.expo
+.expo-shared
+*.expo
+.expo-packager
+/dist
+/build
+web-build/
+!.expo/README.md
+
+# Bundler/Build outputs
+android/app/build/
+ios/build/
+*.tgz
+
+# Environment & secrets
 .env
+.env.*
+*.keystore
+keystore/
+
+# Metro, packager, TypeScript, npm
+.cache
+babel-output/
+tsconfig.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+

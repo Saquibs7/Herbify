@@ -16,6 +16,12 @@
       "eas": {
         "projectId": "a3df1404-bfe3-4d38-88e4-f7235ac8e9a1"
       }
-    }
+    },
+    "android": {
+      "package": "com.shrey1803.herbify"
+    },
+    "plugins": [
+      "expo-barcode-scanner"
+    ]
   }
 }
