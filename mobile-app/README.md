@@ -10,8 +10,9 @@
   - `LabDashboard.js` — Quality test reports and batch verification.
   - `ConsumerDashboard.js` — Product scan & verification view.
   - `ProcessorDashboard.js` — Batch processing logs, smart contract validations, and live processing stages.
-  - `ConsumerDashboard.js` — Product scan and provenance verification.
+  - `RetailerDashboard.js` — Generate Serialized Tgs and Link Packaging.
   - `SplashScreen.js` — Initial loading screen.
+  - `ScanScreen.js`— Requests to access camera and scan QR.
 - **src/services/AppNavigator.js** — Stack navigator defining screen flow.
 
 ## Current Features
