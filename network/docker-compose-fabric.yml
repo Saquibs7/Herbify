@@ -1,0 +1,155 @@
+volumes:
+  orderer.herbify.com:
+  peer0.farmer.herbify.com:
+  peer0.processor.herbify.com:
+  peer0.lab.herbify.com:
+
+networks:
+  herbify-net:
+    name: herbify_network
+
+services:
+  orderer.herbify.com:
+    container_name: orderer.herbify.com
+    image: hyperledger/fabric-orderer:2.5
+    user: "root"
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+      - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block:z
+      - ./crypto-config/ordererOrganizations/herbify.com/orderers/orderer.herbify.com/msp:/var/hyperledger/orderer/msp:z
+      - ./crypto-config/ordererOrganizations/herbify.com/orderers/orderer.herbify.com/tls/:/var/hyperledger/orderer/tls:z
+      - orderer.herbify.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+    networks:
+      - herbify-net
+
+  peer0.farmer.herbify.com:
+    container_name: peer0.farmer.herbify.com
+    image: hyperledger/fabric-peer:2.5
+    user: "root"
+    environment:
+      - CORE_PEER_ID=peer0.farmer.herbify.com
+      - CORE_PEER_ADDRESS=peer0.farmer.herbify.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.farmer.herbify.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.farmer.herbify.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.farmer.herbify.com:7051
+      - CORE_PEER_LOCALMSPID=FarmerOrgMSP
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=herbify_network
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_BCCSP_DEFAULT=SW
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./crypto-config/peerOrganizations/farmer.herbify.com/peers/peer0.farmer.herbify.com/msp:/etc/hyperledger/fabric/msp:z
+      - ./crypto-config/peerOrganizations/farmer.herbify.com/peers/peer0.farmer.herbify.com/tls:/etc/hyperledger/fabric/tls:z
+      - peer0.farmer.herbify.com:/var/hyperledger/production
+    ports:
+      - 7051:7051
+    networks:
+      - herbify-net
+
+  peer0.processor.herbify.com:
+    container_name: peer0.processor.herbify.com
+    image: hyperledger/fabric-peer:2.5
+    user: "root"
+    environment:
+      - CORE_PEER_ID=peer0.processor.herbify.com
+      - CORE_PEER_ADDRESS=peer0.processor.herbify.com:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.processor.herbify.com:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.processor.herbify.com:9051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.processor.herbify.com:9051
+      - CORE_PEER_LOCALMSPID=ProcessorOrgMSP
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=herbify_network
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_BCCSP_DEFAULT=SW 
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./crypto-config/peerOrganizations/processor.herbify.com/peers/peer0.processor.herbify.com/msp:/etc/hyperledger/fabric/msp:z
+      - ./crypto-config/peerOrganizations/processor.herbify.com/peers/peer0.processor.herbify.com/tls:/etc/hyperledger/fabric/tls:z
+      - peer0.processor.herbify.com:/var/hyperledger/production
+    ports:
+      - 9051:9051
+    networks:
+      - herbify-net
+
+  peer0.lab.herbify.com:
+    container_name: peer0.lab.herbify.com
+    image: hyperledger/fabric-peer:2.5
+    user: "root"
+    environment:
+      - CORE_PEER_ID=peer0.lab.herbify.com
+      - CORE_PEER_ADDRESS=peer0.lab.herbify.com:11051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:11051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.lab.herbify.com:11052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:11052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.lab.herbify.com:11051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.lab.herbify.com:11051
+      - CORE_PEER_LOCALMSPID=LabOrgMSP
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=herbify_network
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_BCCSP_DEFAULT=SW 
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./crypto-config/peerOrganizations/lab.herbify.com/peers/peer0.lab.herbify.com/msp:/etc/hyperledger/fabric/msp:z
+      - ./crypto-config/peerOrganizations/lab.herbify.com/peers/peer0.lab.herbify.com/tls:/etc/hyperledger/fabric/tls:z
+      - peer0.lab.herbify.com:/var/hyperledger/production
+    ports:
+      - 11051:11051
+    networks:
+      - herbify-net
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:2.5
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - FABRIC_LOGGING_SPEC=INFO
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../chaincode/:/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode/:z
+      - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config:z
+      - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts:z
+    depends_on:
+      - orderer.herbify.com
+      - peer0.farmer.herbify.com
+      - peer0.processor.herbify.com
+      - peer0.lab.herbify.com
+    networks:
+      - herbify-net

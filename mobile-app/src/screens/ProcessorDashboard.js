@@ -9,12 +9,13 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
+const { width } = Dimensions.get('window');
+
 const colors = {
   background: '#F0FDF4',
   primary: '#A3FFD2',
   secondary: '#004D40',
   text: '#1A1A1A',
-  textSecondary: '#9CA3AF',
   border: '#E2E8F0',
   success: '#10B981',
 };
@@ -32,7 +33,7 @@ const styles = StyleSheet.create({
   headerTitleRow: { flexDirection: 'row', alignItems: 'center' },
   headerTitleIcon: { marginRight: 8 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: colors.primary },
-
+  
   // Content
   content: { flex: 1, padding: 16 },
 
@@ -105,11 +106,6 @@ const ProcessorDashboard = () => {
     { id: '5', icon: 'air', title: '💨 Drying Logged', desc: 'Herbs dried using industrial dehydrators. Moisture at 8%.', time: '🕚 Oct 26, 2023, 11:00 AM' },
     { id: '6', icon: 'cleaning-services', title: '🧼 Cleaning Logged', desc: 'Initial batch of raw herbs from farmer received and cleaned.', time: '🕘 Oct 26, 2023, 09:15 AM' },
   ];
-
-  // TODO: Replace static batch and log data with live blockchain queries
-  // TODO: When logging batch steps, send transactions to blockchain smart contracts
-  // TODO: Integrate AI/ML services for quality control data interpretation and report generation
-  // TODO: Subscribe to MQTT topics for real-time IoT sensor data during batch processing
 
   return (
     <View style={styles.container}>

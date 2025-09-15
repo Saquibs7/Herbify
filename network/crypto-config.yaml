@@ -1,0 +1,32 @@
+OrdererOrgs:
+  - Name: OrdererOrg
+    Domain: herbify.com
+    EnableNodeOUs: true
+    Specs:
+      - Hostname: orderer
+        CommonName: orderer.herbify.com
+
+PeerOrgs:
+  - Name: FarmerOrg
+    Domain: farmer.herbify.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+
+  - Name: ProcessorOrg
+    Domain: processor.herbify.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+
+  - Name: LabOrg
+    Domain: lab.herbify.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+    Users:
+      Count: 1
