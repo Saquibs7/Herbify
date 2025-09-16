@@ -1,1 +1,0 @@
-echo "just for test"
