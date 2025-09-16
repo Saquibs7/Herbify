@@ -177,6 +177,7 @@ function create_and_join_channel() {
     join_peer "LabOrg" "peer0.lab.herbify.com" 11051
 }
 
+# --- Corrected function ---
 function join_peer() {
     local ORG_NAME=$1
     local PEER_HOST=$2
@@ -185,6 +186,7 @@ function join_peer() {
     
     print_header "Joining ${PEER_HOST} to channel..."
     docker exec \
+      -e CORE_PEER_TLS_ENABLED=true \
       -e CORE_PEER_LOCALMSPID="${ORG_NAME}MSP" \
       -e CORE_PEER_TLS_ROOTCERT_FILE="/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/${ORG_DOMAIN_LOWER}.herbify.com/peers/${PEER_HOST}/tls/ca.crt" \
       -e CORE_PEER_MSPCONFIGPATH="/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/${ORG_DOMAIN_LOWER}.herbify.com/users/Admin@${ORG_DOMAIN_LOWER}.herbify.com/msp" \
@@ -193,7 +195,6 @@ function join_peer() {
     print_success "${PEER_HOST} has joined the channel."
 }
 
-
 # --- Main Execution ---
 network_down
 generate_artifacts
@@ -201,6 +202,6 @@ start_network
 create_and_join_channel
 
 echo ""
-print_success "Ayur-Trace development network is UP and RUNNING!"
+print_success "Herbify development network is UP and RUNNING!"
 echo "You can interact with the network using the 'cli' container:"
 echo "  docker exec -it cli bash"
