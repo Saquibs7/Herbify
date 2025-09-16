@@ -89,13 +89,13 @@ Application: &ApplicationDefaults
             Rule: "ANY Writers"
         Admins:
             Type: ImplicitMeta
-            Rule: "ANY Admins"
+            Rule: "MAJORITY Admins"
         LifecycleEndorsement:
-            Type: ImplicitMeta
-            Rule: "MAJORITY Endorsement"
+            Type: Signature
+            Rule: "OutOf(2, 'FarmerOrgMSP.member', 'ProcessorOrgMSP.member', 'LabOrgMSP.member')" # <-- CORRECT SYNTAX
         Endorsement:
-            Type: ImplicitMeta
-            Rule: "MAJORITY Endorsement"
+            Type: Signature
+            Rule: "OutOf(2, 'FarmerOrgMSP.member', 'ProcessorOrgMSP.member', 'LabOrgMSP.member')" # <-- CORRECT SYNTAX
     Capabilities:
         <<: *ApplicationCapabilities
 
@@ -124,7 +124,7 @@ Orderer: &OrdererDefaults
             Rule: "ANY Writers"
         Admins:
             Type: ImplicitMeta
-            Rule: "ANY Admins"
+            Rule: "MAJORITY Admins"
         BlockValidation:
             Type: ImplicitMeta
             Rule: "ANY Writers"
