@@ -6,9 +6,8 @@ SCRIPTS_DIR=$(cd "$(dirname "$0")" && pwd)
 PROJECT_ROOT=$(cd "${SCRIPTS_DIR}/.." && pwd)
 NETWORK_DIR="${PROJECT_ROOT}/network"
 CHANNEL_NAME="herbchannel"
-WAIT_TIMEOUT=60
+COMPOSE_FILE="${NETWORK_DIR}/docker-compose-fabric.yml"
 
-# --- Helper Functions ---
 function print_header() {
   echo ""
   echo -e "\e[96m==== $1 ====\e[0m"
@@ -25,6 +24,9 @@ function print_error() {
 
 function network_down() {
     print_header "Shutting down and cleaning old network..."
+    if [ -f "$COMPOSE_FILE" ]; then
+        docker compose -f "$COMPOSE_FILE" down --volumes --remove-orphans
+    fi
     for container in cli orderer.herbify.com peer0.farmer.herbify.com peer0.processor.herbify.com peer0.lab.herbify.com; do
         if [ "$(docker ps -a -q -f name=^/${container}$)" ]; then
             echo "Stopping and removing $container..."
@@ -41,6 +43,10 @@ function network_down() {
 }
 
 function generate_artifacts() {
+    if ! command -v cryptogen &> /dev/null || ! command -v configtxgen &> /dev/null; then
+        print_error "cryptogen or configtxgen not found. Please ensure Hyperledger Fabric binaries are in your PATH."
+    fi
+
     print_header "Generating cryptographic material..."
     mkdir -p "${NETWORK_DIR}/channel-artifacts"
     cryptogen generate --config="${NETWORK_DIR}/crypto-config.yaml" --output="${NETWORK_DIR}/crypto-config"
@@ -57,106 +63,20 @@ function generate_artifacts() {
 }
 
 function start_network() {
-    print_header "Starting Docker containers using 'docker run'..."
-    docker network create herbify_network || true
-
-    docker run -d --rm \
-      --name orderer.herbify.com --hostname orderer.herbify.com \
-      --network herbify_network \
-      -p 7050:7050 \
-      -e FABRIC_LOGGING_SPEC=INFO \
-      -e ORDERER_GENERAL_LISTENADDRESS=0.0.0.0 \
-      -e ORDERER_GENERAL_LOCALMSPID=OrdererMSP \
-      -e ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp \
-      -e ORDERER_GENERAL_GENESISMETHOD=file \
-      -e ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block \
-      -e ORDERER_GENERAL_TLS_ENABLED=true \
-      -e ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key \
-      -e ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt \
-      -e ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt] \
-      -v "${NETWORK_DIR}/channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block:z" \
-      -v "${NETWORK_DIR}/crypto-config/ordererOrganizations/herbify.com/orderers/orderer.herbify.com/msp:/var/hyperledger/orderer/msp:z" \
-      -v "${NETWORK_DIR}/crypto-config/ordererOrganizations/herbify.com/orderers/orderer.herbify.com/tls/:/var/hyperledger/orderer/tls:z" \
-      hyperledger/fabric-orderer:2.5
-
-    # Start Peers
-    start_peer "peer0.farmer.herbify.com" 7051 "FarmerOrgMSP"
-    start_peer "peer0.processor.herbify.com" 9051 "ProcessorOrgMSP"
-    start_peer "peer0.lab.herbify.com" 11051 "LabOrgMSP"
-
-    print_header "Waiting for containers to become healthy..."
-    wait_for_peer_ready "peer0.farmer.herbify.com"
-    wait_for_peer_ready "peer0.processor.herbify.com"
-    wait_for_peer_ready "peer0.lab.herbify.com"
+    print_header "Starting Fabric network using Docker Compose..."
+    docker compose -f "$COMPOSE_FILE" up -d
+    
+    echo "Waiting for network to stabilize..."
+    sleep 10
     
     docker ps
     print_success "All containers are up and running."
 }
 
-function start_peer() {
-    local PEER_NAME=$1
-    local PEER_PORT=$2
-    local MSP_ID=$3
-    local ORG_DOMAIN=$(echo $PEER_NAME | cut -d'.' -f2)
-
-    docker run -d --rm \
-      --name $PEER_NAME --hostname $PEER_NAME \
-      --network herbify_network \
-      -p $PEER_PORT:$PEER_PORT \
-      -e CORE_PEER_ID=$PEER_NAME \
-      -e CORE_PEER_ADDRESS=$PEER_NAME:$PEER_PORT \
-      -e CORE_PEER_LISTENADDRESS=0.0.0.0:$PEER_PORT \
-      -e CORE_PEER_CHAINCODEADDRESS=${PEER_NAME}:$((${PEER_PORT}+1)) \
-      -e CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:$((${PEER_PORT}+1)) \
-      -e CORE_PEER_GOSSIP_BOOTSTRAP=$PEER_NAME:$PEER_PORT \
-      -e CORE_PEER_GOSSIP_EXTERNALENDPOINT=$PEER_NAME:$PEER_PORT \
-      -e CORE_PEER_LOCALMSPID=$MSP_ID \
-      -e CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock \
-      -e CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=herbify_network \
-      -e FABRIC_LOGGING_SPEC=INFO \
-      -e CORE_PEER_TLS_ENABLED=true \
-      -e CORE_PEER_BCCSP_DEFAULT=SW \
-      -v /var/run/:/host/var/run/ \
-      -v "${NETWORK_DIR}/crypto-config/peerOrganizations/${ORG_DOMAIN}.herbify.com/peers/${PEER_NAME}/msp:/etc/hyperledger/fabric/msp:z" \
-      -v "${NETWORK_DIR}/crypto-config/peerOrganizations/${ORG_DOMAIN}.herbify.com/peers/${PEER_NAME}/tls:/etc/hyperledger/fabric/tls:z" \
-      hyperledger/fabric-peer:2.5
-}
-
-function wait_for_peer_ready() {
-    local peer_container=$1
-    local start_time=$(date +%s)
-    echo -n "Waiting for $peer_container to be ready..."
-    
-    while true; do
-        if [ $(( $(date +%s) - start_time )) -gt $WAIT_TIMEOUT ]; then
-            echo ""
-            print_error "$peer_container did not become healthy within $WAIT_TIMEOUT seconds."
-        fi
-        
-        if docker logs $peer_container 2>&1 | grep -q "Started peer with ID"; then
-            echo " Done."
-            return
-        fi
-        sleep 1
-        echo -n "."
-    done
-}
-
 function create_and_join_channel() {
-    print_header "Starting CLI container..."
-    docker run -d --rm -it \
-        --name cli \
-        --network herbify_network \
-        -e FABRIC_LOGGING_SPEC=INFO \
-        -v /var/run/:/host/var/run/ \
-        -v "${PROJECT_ROOT}/chaincode/:/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode/:z" \
-        -v "${NETWORK_DIR}/crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config:z" \
-        -v "${NETWORK_DIR}/channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts:z" \
-        hyperledger/fabric-tools:2.5 sleep infinity
-    print_success "CLI container started."
-
     print_header "Creating channel '$CHANNEL_NAME'..."
     docker exec \
+      -e CORE_PEER_TLS_ENABLED=true \
       -e CORE_PEER_LOCALMSPID="FarmerOrgMSP" \
       -e CORE_PEER_TLS_ROOTCERT_FILE="/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/farmer.herbify.com/peers/peer0.farmer.herbify.com/tls/ca.crt" \
       -e CORE_PEER_MSPCONFIGPATH="/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/farmer.herbify.com/users/Admin@farmer.herbify.com/msp" \
@@ -185,6 +105,7 @@ function join_peer() {
     
     print_header "Joining ${PEER_HOST} to channel..."
     docker exec \
+      -e CORE_PEER_TLS_ENABLED=true \
       -e CORE_PEER_LOCALMSPID="${ORG_NAME}MSP" \
       -e CORE_PEER_TLS_ROOTCERT_FILE="/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/${ORG_DOMAIN_LOWER}.herbify.com/peers/${PEER_HOST}/tls/ca.crt" \
       -e CORE_PEER_MSPCONFIGPATH="/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/${ORG_DOMAIN_LOWER}.herbify.com/users/Admin@${ORG_DOMAIN_LOWER}.herbify.com/msp" \
@@ -193,14 +114,12 @@ function join_peer() {
     print_success "${PEER_HOST} has joined the channel."
 }
 
-
-# --- Main Execution ---
 network_down
 generate_artifacts
 start_network
 create_and_join_channel
 
 echo ""
-print_success "Ayur-Trace development network is UP and RUNNING!"
+print_success "Herbify development network is UP and RUNNING!"
 echo "You can interact with the network using the 'cli' container:"
 echo "  docker exec -it cli bash"
